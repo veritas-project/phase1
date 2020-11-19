@@ -8,5 +8,5 @@ applies the FEAT Fairness Assessment Methodology to fictional AIDA systems in tw
 - For the *customer marketing* use case, see the `customer_marketing` folder.
 
 NOTE: This is an initial upload of the Phase 1 code. The final version will
-have the two case-studies integregated with a unified set of installation
+have the two case studies integregated with a unified set of installation
 instructions etc.
