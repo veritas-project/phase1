@@ -1,5 +1,20 @@
-"""Helpers
-"""
+'''
+Helper functions for credit scoring analysis
+
+Written by Marc-Etienne Brunet,
+Element AI inc. (info@elementai.com).
+
+Copyright © 2020 Monetary Authority of Singapore
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this file except in compliance with the License. You may obtain a copy of the
+License at http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software distributed
+under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+CONDITIONS OF ANY KIND, either express or implied. See the License for the
+specific language governing permissions and limitations under the License.
+'''
+
 from collections import namedtuple
 
 import numpy as np
@@ -21,43 +36,35 @@ def load_dataset(filepath, target='TARGET', drop_columns=[]):
     df.dropna(how="any", axis=0, inplace=True)
     n_dropped = original_len - len(df)
     n_dropped != 0 and print(f"Warning - dropped {n_dropped} rows with NA data.")
-    df = reduce_memory(df)  # Need this to detect categorical variables for SMOTe
+    df = compress_df_mem(df)  # Need this to detect categorical variables for SMOTe
     y = np.array(df[target])
     df.drop(target, axis=1, inplace=True)
     return df, y
 
 
-def reduce_memory(df, verbose=False):
-    """Reduce memory usage of a dataframe by setting data types. """
-    start_mem = df.memory_usage().sum() / 1024 ** 2
-    verbose and print('Initial df memory usage is {:.2f} MB for {} columns'
-                      .format(start_mem, len(df.columns)))
-
+def compress_df_mem(df):
+    """Compress memory usage of a dataframe"""
     for col in df.columns:
         col_type = df[col].dtypes
         if col_type != object:
-            cmin = df[col].min()
-            cmax = df[col].max()
+            col_min = df[col].min()
+            col_max = df[col].max()
             if str(col_type)[:3] == 'int':
-                # Can use unsigned int here too
-                if cmin > np.iinfo(np.int8).min and cmax < np.iinfo(np.int8).max:
+                if col_min > np.iinfo(np.int8).min and col_max < np.iinfo(np.int8).max:
                     df[col] = df[col].astype(np.int8)
-                elif cmin > np.iinfo(np.int16).min and cmax < np.iinfo(np.int16).max:
+                elif col_min > np.iinfo(np.int16).min and col_max < np.iinfo(np.int16).max:
                     df[col] = df[col].astype(np.int16)
-                elif cmin > np.iinfo(np.int32).min and cmax < np.iinfo(np.int32).max:
+                elif col_min > np.iinfo(np.int32).min and col_max < np.iinfo(np.int32).max:
                     df[col] = df[col].astype(np.int32)
-                elif cmin > np.iinfo(np.int64).min and cmax < np.iinfo(np.int64).max:
+                elif col_min > np.iinfo(np.int64).min and col_max < np.iinfo(np.int64).max:
                     df[col] = df[col].astype(np.int64)
             else:
-                if cmin > np.finfo(np.float16).min and cmax < np.finfo(np.float16).max:
+                if col_min > np.finfo(np.float16).min and col_max < np.finfo(np.float16).max:
                     df[col] = df[col].astype(np.float16)
-                elif cmin > np.finfo(np.float32).min and cmax < np.finfo(np.float32).max:
+                elif col_min > np.finfo(np.float32).min and col_max < np.finfo(np.float32).max:
                     df[col] = df[col].astype(np.float32)
                 else:
                     df[col] = df[col].astype(np.float64)
-    end_mem = df.memory_usage().sum() / 1024 ** 2
-    mem_red = 100 * (start_mem - end_mem) / start_mem
-    verbose and print(f'Final memory usage is: {end_mem:.2f} MB - decreased by {mem_red:.1f}%')
     return df
 
 
